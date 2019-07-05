@@ -38,7 +38,7 @@ fun deadlockWithSyncSyncRequester() {
 
     transport.start()
 
-    val executor = Executors.newFixedThreadPool(50)
+    val executor = Executors.newFixedThreadPool(5)
 
     for (i in 1..1000) {
         val randomTimeout = (Math.random() * 10000).toLong()
