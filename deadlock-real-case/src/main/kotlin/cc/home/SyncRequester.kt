@@ -18,7 +18,7 @@ class SyncRequester(private val transport: AsyncTransport) {
                 lock.wait(remainingTimeout)
             }
 
-            //Sleep just to increase the chance in re-producing cc.home.deadlock
+            //Sleep just to increase the chance in re-producing deadlock
             //This sleep has nothing to do with business logic.
             Thread.sleep(200)
 
