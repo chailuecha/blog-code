@@ -57,32 +57,35 @@ class ManualCommitConsumer(config: ConsumerApplicationConfig) : CommandLineRunne
             if (records.isEmpty) continue
 
             val count = AtomicInteger(0)
-            records.forEach { rec ->
-                val keyBytes = rec.key().toByteArray()
-                when (db.get(keyBytes)) {
-                    null -> db.put(keyBytes, keyBytes)
-                    else -> db.incrementDuplicateCount()
-                }
-
-                //Commit the offset of next message to be fetched
-                offsetMap[rec.topicPartition()] = OffsetAndMetadata(rec.offset() + 1)
-                if (count.incrementAndGet() % 100 == 0) {
-                    logger.debug {
-                        "Processed 100 messages. Current duplicate count: ${db.getDuplicateCount()}. "
+            try {
+                //process and commit every 100 messages
+                records.forEach { rec ->
+                    val keyBytes = rec.key().toByteArray()
+                    when (db.get(keyBytes)) {
+                        null -> db.put(keyBytes, keyBytes)
+                        else -> db.incrementDuplicateCount()
                     }
 
-                    if (count.get() % 300 == 0) simulateTooLongProcessing()
+                    //Commit the offset of next message to be fetched
+                    offsetMap[rec.topicPartition()] =
+                            OffsetAndMetadata(rec.offset() + 1)
+                    if (count.incrementAndGet() % 100 == 0) {
+                        logger.debug {
+                            "Processed 100 messages. " +
+                            "Current duplicate count: ${db.getDuplicateCount()}. "
+                        }
 
-                    logger.debug { "Manually commit offsets." }
-                    try {
+                        if (count.get() % 300 == 0) simulateTooLongProcessing()
+
+                        logger.debug { "Manually commit offsets." }
                         // Commit sync is slow. I use it here just to see if it throw error
                         // when the consumer is already out of consumer group.
                         consumer.commitSync(offsetMap)
-
-                    } catch (ex: CommitFailedException) {
-                        logger.error { ex.message }
                     }
                 }
+
+            } catch (ex: CommitFailedException) {
+                logger.error { ex.message }
             }
         }
 
