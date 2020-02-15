@@ -1,0 +1,7 @@
+logging.level:
+  org.apache.kafka.clients.consumer.internal.ConsumerCoordinator: DEBUG
+  cc.home.msg.dedup: DEBUG
+
+consumer:
+  bootstrap-servers: "localhost:9092"
+  group-id: "test-consumer"
